@@ -4,32 +4,27 @@ import Product from "../models/productModel.js";
 // Create a Product
 export const createProduct = async (req, res) => {
   try {
-    const { name, brand, category, price, description, sku, images, videos, inStock, ratings, dimensions } = req.body;
+    const { name, brand, categoryID, price, description, totalStock, images, videos, dimensions } = req.body;
 
-    // Check if product name or SKU already exists in the products collection
-    const existingProductByName = await Product.findOne({ name });
-    if (existingProductByName) {
-      return res.status(400).json({ message: "Product name already exists" });
+    // Check if the product name already exists
+    const existingProduct = await Product.findOne({ name });
+    if (existingProduct) {
+      return res.status(400).json({ message: "Product with this name already exists" });
     }
 
-    const existingProductBySKU = await Product.findOne({ sku });
-    if (existingProductBySKU) {
-      return res.status(400).json({ message: "Product SKU already exists" });
-    }
-
-    // Create a new product document in the "products" collection
+    // Create new product
     const product = new Product({
       name,
       brand,
-      category,
+      categoryID,
       price,
       description,
-      sku,
-      images: images || [],
-      videos: videos || [],
-      inStock: inStock !== undefined ? inStock : false,
-      ratings: ratings !== undefined ? ratings : 0,
-      dimensions: dimensions || "",
+      totalStock,
+      images,
+      videos: videos || [], // If videos are not provided, default to an empty array
+      inStock: totalStock > 0,
+      ratings: 0, // Default to 0 ratings
+      dimensions: dimensions || "", // Default to empty string if not provided
     });
 
     await product.save();
@@ -40,10 +35,10 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// Fetch all products
+// Fetch all Products
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate("categoryID", "name"); // Populates category name
     res.status(200).json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -51,7 +46,7 @@ export const getProducts = async (req, res) => {
   }
 };
 
-// Delete a product
+// Delete a Product
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -66,19 +61,18 @@ export const deleteProduct = async (req, res) => {
   }
 };
 
-// Update a product
+// Update a Product
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, brand, category, price, description, sku, images, videos, inStock, ratings, dimensions } = req.body;
+    const { name, brand, categoryID, price, description, totalStock, images, videos, dimensions } = req.body;
 
-    // Find the existing product
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Check if new name or SKU conflicts with other products
+    // Check if name is changing and already exists
     if (name && name !== existingProduct.name) {
       const nameExists = await Product.findOne({ name });
       if (nameExists) {
@@ -86,53 +80,27 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    if (sku && sku !== existingProduct.sku) {
-      const skuExists = await Product.findOne({ sku });
-      if (skuExists) {
-        return res.status(400).json({ message: "Product SKU already exists" });
-      }
-    }
-
-    // Prepare update data
-    const updateData = {
-      name: name || existingProduct.name,
-      brand: brand || existingProduct.brand,
-      category: category || existingProduct.category,
-      price: price !== undefined ? price : existingProduct.price,
-      description: description || existingProduct.description,
-      sku: sku || existingProduct.sku,
-      images: images !== undefined ? images : existingProduct.images,
-      videos: videos !== undefined ? videos : existingProduct.videos,
-      inStock: inStock !== undefined ? inStock : existingProduct.inStock,
-      ratings: ratings !== undefined ? ratings : existingProduct.ratings,
-      dimensions: dimensions !== undefined ? dimensions : existingProduct.dimensions,
-      updatedAt: Date.now(),
-    };
-
-    // Update the product
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      updateData,
+      {
+        name: name || existingProduct.name,
+        brand: brand || existingProduct.brand,
+        categoryID: categoryID || existingProduct.categoryID,
+        price: price !== undefined ? price : existingProduct.price,
+        description: description || existingProduct.description,
+        totalStock: totalStock !== undefined ? totalStock : existingProduct.totalStock,
+        images: images || existingProduct.images,
+        videos: videos || existingProduct.videos,
+        dimensions: dimensions || existingProduct.dimensions,
+        inStock: totalStock > 0,
+        updatedAt: Date.now(),
+      },
       { new: true, runValidators: true }
     );
 
-    res.status(200).json({
-      message: "Product updated successfully",
-      product: updatedProduct,
-    });
+    res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
   } catch (error) {
     console.error("Error updating product:", error);
-
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: "Validation error",
-        error: error.message
-      });
-    }
-
-    res.status(500).json({
-      message: "Server error",
-      error: error.message
-    });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
