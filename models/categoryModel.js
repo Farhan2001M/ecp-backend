@@ -1,3 +1,5 @@
+// models/categoryModels.js
+
 import mongoose from "mongoose";
 
 const CategorySchema = new mongoose.Schema({
@@ -6,6 +8,7 @@ const CategorySchema = new mongoose.Schema({
   highlighted: { type: Boolean, default: false }, 
   servings: { type: [String], required: true },
   servingsCount: { type: Number, required: true },
+  productCount: { type: Number, default: 0 }, // Default value is already set to 0
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

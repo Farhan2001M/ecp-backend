@@ -1,5 +1,6 @@
-import Category from "../models/category.js";
+// controllers/categoryControllers.js
 
+import Category from "../models/categoryModel.js";
 
 // Create a Category
 export const createCategory = async (req, res) => {
@@ -18,6 +19,7 @@ export const createCategory = async (req, res) => {
       name,
       servings: servingsAsStrings,
       servingsCount,
+      productCount: 0, // Explicitly set productCount to 0 (though the schema default already handles this)
     });
     await category.save();
     res.status(201).json({ message: "Category created successfully", category });
