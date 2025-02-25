@@ -5,7 +5,7 @@ import Category from "../models/categoryModel.js";
 // Create a Product
 export const createProduct = async (req, res) => {
   try {
-    const { name, brand, categoryID, price, description, totalStock, images, videos, dimensions } = req.body;
+    const { name, tagline, brand, categoryID, price, totalStock , ratings , dimensions , description, images, videos } = req.body;
 
     // Check if the product name already exists
     const existingProduct = await Product.findOne({ name });
@@ -14,20 +14,7 @@ export const createProduct = async (req, res) => {
     }
 
     // Create new product
-    const product = new Product({
-      name,
-      brand,
-      categoryID,
-      price,
-      description,
-      totalStock,
-      images,
-      videos: videos || [], // If videos are not provided, default to an empty array
-      inStock: totalStock > 0,
-      ratings: 0, // Default to 0 ratings
-      dimensions: dimensions || "", // Default to empty string if not provided
-    });
-
+    const product = new Product({ name, tagline, brand, categoryID, price, totalStock, ratings, dimensions: dimensions || "",  description, images, videos: videos || [], inStock: totalStock > 0, });
     
     // ✅ Increment productCount in the respective category
     await Category.findByIdAndUpdate(categoryID, { $inc: { productCount: 1 } });
@@ -71,11 +58,12 @@ export const deleteProduct = async (req, res) => {
 };
 
 
+
 // Update a Product
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, brand, categoryID, price, description, totalStock, images, videos, dimensions } = req.body;
+    const { name, tagline, brand, categoryID , price, totalStock, ratings, dimensions, description, images, videos} = req.body;
 
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
@@ -94,14 +82,16 @@ export const updateProduct = async (req, res) => {
       id,
       {
         name: name || existingProduct.name,
+        tagline: tagline || existingProduct.tagline,
         brand: brand || existingProduct.brand,
         categoryID: categoryID || existingProduct.categoryID,
         price: price !== undefined ? price : existingProduct.price,
-        description: description || existingProduct.description,
         totalStock: totalStock !== undefined ? totalStock : existingProduct.totalStock,
+        ratings: ratings !== undefined ? ratings : existingProduct.ratings,
+        dimensions: dimensions || existingProduct.dimensions,
+        description: description || existingProduct.description,
         images: images || existingProduct.images,
         videos: videos || existingProduct.videos,
-        dimensions: dimensions || existingProduct.dimensions,
         inStock: totalStock > 0,
         updatedAt: Date.now(),
       },
