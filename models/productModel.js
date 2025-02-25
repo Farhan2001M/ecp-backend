@@ -12,7 +12,7 @@ const ProductSchema = new mongoose.Schema({
   dimensions: { type: String, default: "" }, // Optional
   description: { type: String, required: true },
   images: { type: [String], required: true }, // Store image URLs
-  videos: { type: [String], default: [] }, // Optional videos URLs
+  videos: { type: String, default: "" }, // Single video URL
   inStock: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

@@ -14,7 +14,20 @@ export const createProduct = async (req, res) => {
     }
 
     // Create new product
-    const product = new Product({ name, tagline, brand, categoryID, price, totalStock, ratings, dimensions: dimensions || "",  description, images, videos: videos || [], inStock: totalStock > 0, });
+    const product = new Product({ 
+      name,
+      tagline, 
+      brand,
+      categoryID,
+      price,
+      totalStock, 
+      ratings,
+      dimensions: dimensions || "",  
+      description, 
+      images,
+      videos: videos || "", // Single video URL
+      inStock: totalStock > 0,
+    });
     
     // ✅ Increment productCount in the respective category
     await Category.findByIdAndUpdate(categoryID, { $inc: { productCount: 1 } });
@@ -91,7 +104,7 @@ export const updateProduct = async (req, res) => {
         dimensions: dimensions || existingProduct.dimensions,
         description: description || existingProduct.description,
         images: images || existingProduct.images,
-        videos: videos || existingProduct.videos,
+        videos: videos || existingProduct.videos, // Single video URL
         inStock: totalStock > 0,
         updatedAt: Date.now(),
       },
