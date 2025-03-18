@@ -12,8 +12,8 @@ const ProductSchema = new mongoose.Schema({
   dimensions: { type: String, default: "" }, // Optional
   description: { type: String, required: true },
   images: { type: [String], required: true }, // Store image URLs
-  videos: { type: String, default: "" }, // Single video URL
-  inStock: { type: Boolean, default: false },
+  video: { type: String, default: "" }, // Single video URL
+  status: { type: Boolean, default: false }, // Change to boolean
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

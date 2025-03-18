@@ -5,7 +5,7 @@ import Category from "../models/categoryModel.js";
 // Create a Product
 export const createProduct = async (req, res) => {
   try {
-    const { name, tagline, brand, categoryID, price, totalStock , ratings , dimensions , description, images, videos } = req.body;
+    const { name, tagline, brand, categoryID, price, totalStock , ratings , dimensions , description, images, video } = req.body;
 
     // Check if the product name already exists
     const existingProduct = await Product.findOne({ name });
@@ -25,8 +25,8 @@ export const createProduct = async (req, res) => {
       dimensions: dimensions || "",  
       description, 
       images,
-      videos: videos || "", // Single video URL
-      inStock: totalStock > 0,
+      video: video || "", // Single video URL
+      status: false, // Set default status to false (inactive)
     });
     
     // ✅ Increment productCount in the respective category
@@ -39,6 +39,78 @@ export const createProduct = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+// Update a Product
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, tagline, brand, categoryID , price, totalStock, ratings, dimensions, description, images, video} = req.body;
+
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check if name is changing and already exists
+    if (name && name !== existingProduct.name) {
+      const nameExists = await Product.findOne({ name });
+      if (nameExists) {
+        return res.status(400).json({ message: "Product name already exists" });
+      }
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        name: name || existingProduct.name,
+        tagline: tagline || existingProduct.tagline,
+        brand: brand || existingProduct.brand,
+        categoryID: categoryID || existingProduct.categoryID,
+        price: price !== undefined ? price : existingProduct.price,
+        totalStock: totalStock !== undefined ? totalStock : existingProduct.totalStock,
+        ratings: ratings !== undefined ? ratings : existingProduct.ratings,
+        dimensions: dimensions || existingProduct.dimensions,
+        description: description || existingProduct.description,
+        images: images || existingProduct.images,
+        video: video || existingProduct.video, // Single video URL
+        updatedAt: Date.now(),
+      },
+      { new: true, runValidators: true }
+    );
+
+    // ✅ If category changed, update product counts
+    if (categoryID && categoryID !== existingProduct.categoryID.toString()) {
+      await Category.findByIdAndUpdate(existingProduct.categoryID, { $inc: { productCount: -1 } });
+      await Category.findByIdAndUpdate(categoryID, { $inc: { productCount: 1 } });
+    }
+
+    res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+// controllers/productControllers.js
+export const toggleProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    // Toggle status
+    product.status = !product.status; // Flip the boolean value
+    await product.save();
+    res.status(200).json({ message: "Product status updated successfully", product });
+  } catch (error) {
+    console.error("Error toggling product status:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 // Fetch all Products
 export const fetchProducts = async (req, res) => {
@@ -71,55 +143,3 @@ export const deleteProduct = async (req, res) => {
 };
 
 
-
-// Update a Product
-export const updateProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, tagline, brand, categoryID , price, totalStock, ratings, dimensions, description, images, videos} = req.body;
-
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    // Check if name is changing and already exists
-    if (name && name !== existingProduct.name) {
-      const nameExists = await Product.findOne({ name });
-      if (nameExists) {
-        return res.status(400).json({ message: "Product name already exists" });
-      }
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        name: name || existingProduct.name,
-        tagline: tagline || existingProduct.tagline,
-        brand: brand || existingProduct.brand,
-        categoryID: categoryID || existingProduct.categoryID,
-        price: price !== undefined ? price : existingProduct.price,
-        totalStock: totalStock !== undefined ? totalStock : existingProduct.totalStock,
-        ratings: ratings !== undefined ? ratings : existingProduct.ratings,
-        dimensions: dimensions || existingProduct.dimensions,
-        description: description || existingProduct.description,
-        images: images || existingProduct.images,
-        videos: videos || existingProduct.videos, // Single video URL
-        inStock: totalStock > 0,
-        updatedAt: Date.now(),
-      },
-      { new: true, runValidators: true }
-    );
-
-    // ✅ If category changed, update product counts
-    if (categoryID && categoryID !== existingProduct.categoryID.toString()) {
-      await Category.findByIdAndUpdate(existingProduct.categoryID, { $inc: { productCount: -1 } });
-      await Category.findByIdAndUpdate(categoryID, { $inc: { productCount: 1 } });
-    }
-
-    res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
