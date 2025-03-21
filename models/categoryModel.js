@@ -21,7 +21,7 @@ const CategorySchema = new mongoose.Schema({
       startDate: Date,
       endDate: Date,
       percentage: Number,
-      status: { type: String, enum: ["Inactive", "Active", "Pending"], default: "Inactive" },
+      status: { type: String, enum: ["Inactive", "Active", "Pending", "Concluded" , "Cancelled"], default: "Inactive" },
       updatedAt: { type: Date, default: Date.now },
     },
   ],

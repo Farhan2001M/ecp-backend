@@ -9,7 +9,6 @@ router.post("/categories", createCategory);
 router.delete("/categories/:id", deleteCategory);
 router.put("/categories/:id", updateCategory);
 
-
 router.put("/categories/:id/update-sale", updateSaleStatus);
 
 export default router;
