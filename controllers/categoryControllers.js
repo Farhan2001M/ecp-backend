@@ -1,6 +1,7 @@
 // controllers/categoryControllers.js
 
 import Category from "../models/categoryModel.js";
+import Product from '../models/productModel.js';
 
 // Create a Category
 export const createCategory = async (req, res) => {
@@ -320,22 +321,26 @@ export const getCategories = async (req, res) => {
 };
 
 
-// Delete a category
+// Delete a category and all associated products
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // First, delete all products associated with the category
+    await Product.deleteMany({ categoryID: id });
+
+    // Then, delete the category
     const deletedCategory = await Category.findByIdAndDelete(id);
     if (!deletedCategory) {
       return res.status(404).json({ message: "Category not found" });
     }
-    res.status(200).json({ message: "Category deleted successfully" });
+
+    res.status(200).json({ message: "Category and associated products deleted successfully" });
   } catch (error) {
     console.error("Error deleting category:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-
 
 
 
